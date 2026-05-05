@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "AhorraSabor",
+    "slug": "ahorra-sabor",
+    "version": "1.0.0",
+    "scheme": "ahorrasabor",
+    "orientation": "portrait",
+    "icon": "./src/assets/icon.png",
+    "splash": {
+      "backgroundColor": "#16A34A"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.ahorrasabor.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Usamos tu ubicación para mostrarte los comercios más cercanos.",
+        "NSCameraUsageDescription": "Necesitamos la cámara para escanear los códigos QR de los clientes."
+      }
+    },
+    "android": {
+      "package": "com.ahorrasabor.app",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/icon.png",
+        "backgroundColor": "#16A34A"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      ["expo-location", {
+        "locationAlwaysAndWhenInUsePermission": "Usamos tu ubicación para mostrarte comercios cercanos."
+      }],
+      ["expo-camera", {
+        "cameraPermission": "Se necesita la cámara para escanear los QR de los clientes."
+      }]
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+name            = "ahorra-sabor-worker"
+main            = "src/index.ts"
+compatibility_date  = "2024-05-01"
+compatibility_flags = ["nodejs_compat"]
+account_id      = "08b5aa97b2264b7f2b7d0101d8fc7b6e"
+
+[vars]
+APP_BASE_URL = "https://ahorra-sabor-worker.scottjs1987.workers.dev"
+TAKE_RATE    = "0.15"
+
+[env.production]
+vars = { APP_BASE_URL = "https://ahorra-sabor-worker.scottjs1987.workers.dev", TAKE_RATE = "0.15" }

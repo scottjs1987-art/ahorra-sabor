@@ -5,6 +5,7 @@ export interface Env {
   MP_WEBHOOK_SECRET: string;
   APP_BASE_URL: string;
   TAKE_RATE: string;
+  PLATFORM_FEE_RATE: string;  // override dinámico del take rate
   QR_SIGNING_SECRET: string;
 }
 

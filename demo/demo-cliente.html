@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>AhorraSabor — Demo Cliente</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  body { background: #f3f4f6; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 24px 16px; }
+
+  /* ── Phone shell ── */
+  .phone { width: 390px; min-height: 844px; background: #f9faf9; border-radius: 44px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.22), 0 0 0 1.5px rgba(0,0,0,.08); position: relative; }
+  .phone-bar { height: 44px; background: #16A34A; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; }
+  .phone-bar .time { color: white; font-size: 15px; font-weight: 600; }
+  .phone-bar .icons { color: white; font-size: 13px; display: flex; gap: 6px; }
+
+  /* ── Screens ── */
+  .screen { display: none; flex-direction: column; height: 100%; }
+  .screen.active { display: flex; }
+
+  /* ── Header ── */
+  .header { background: #16A34A; padding: 20px 20px 24px; }
+  .header h1 { color: white; font-size: 24px; font-weight: 800; }
+  .header p  { color: #bbf7d0; font-size: 13px; margin-top: 3px; }
+
+  /* ── Filtros ── */
+  .filtros { display: flex; gap: 8px; padding: 12px 16px; overflow-x: auto; background: #f9faf9; scrollbar-width: none; }
+  .filtros::-webkit-scrollbar { display: none; }
+  .chip { padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; border: none; background: #e5e7eb; color: #374151; transition: .15s; }
+  .chip.active { background: #16A34A; color: white; }
+  .chip:hover { opacity: .85; }
+
+  /* ── Pack card ── */
+  .lista { flex: 1; overflow-y: auto; padding: 4px 0 24px; }
+  .card { background: white; border-radius: 20px; margin: 8px 16px; box-shadow: 0 2px 12px rgba(0,0,0,.07); overflow: hidden; cursor: pointer; transition: transform .12s; }
+  .card:hover { transform: scale(1.01); }
+  .card-badge { padding: 5px 14px; font-size: 11px; font-weight: 700; color: white; align-self: flex-start; border-bottom-right-radius: 12px; }
+  .card-body { padding: 14px 16px 16px; }
+  .card-merchant { font-size: 12px; color: #6b7280; margin-bottom: 2px; }
+  .card-title    { font-size: 17px; font-weight: 800; color: #111827; margin-bottom: 10px; line-height: 1.25; }
+  .price-row     { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .price-offer   { font-size: 24px; font-weight: 900; color: #16A34A; }
+  .price-reg     { font-size: 14px; color: #9ca3af; text-decoration: line-through; }
+  .badge-pct     { background: #fef9c3; color: #ca8a04; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 8px; }
+  .ahorro-text   { font-size: 13px; color: #059669; font-weight: 600; margin-bottom: 10px; }
+  .card-footer   { display: flex; justify-content: space-between; }
+  .card-footer span { font-size: 12px; color: #9ca3af; }
+  .stock-alerta  { margin-top: 8px; font-size: 12px; color: #dc2626; font-weight: 700; }
+
+  /* ── Tab bar ── */
+  .tabbar { display: flex; background: white; border-top: 1px solid #f3f4f6; padding: 10px 0 18px; }
+  .tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; border: none; background: none; padding: 0; }
+  .tab .tab-icon { font-size: 22px; }
+  .tab .tab-label { font-size: 10px; font-weight: 600; color: #9ca3af; }
+  .tab.active .tab-label { color: #16A34A; }
+
+  /* ── Detalle ── */
+  .detalle-scroll { flex: 1; overflow-y: auto; padding: 20px 20px 24px; }
+  .detalle-header-bar { display: flex; align-items: center; gap: 12px; padding: 14px 20px; background: white; border-bottom: 1px solid #f3f4f6; }
+  .btn-back { font-size: 22px; cursor: pointer; background: none; border: none; }
+  .detalle-header-bar span { font-size: 17px; font-weight: 700; color: #111827; }
+  .hero-card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 14px; box-shadow: 0 1px 8px rgba(0,0,0,.06); }
+  .hero-cat   { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; color: #f97316; margin-bottom: 4px; }
+  .hero-merchant { font-size: 13px; color: #6b7280; margin-bottom: 4px; }
+  .hero-title    { font-size: 22px; font-weight: 900; color: #111827; margin-bottom: 8px; }
+  .hero-desc     { font-size: 14px; color: #6b7280; line-height: 1.5; }
+  .seccion { background: white; border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 6px rgba(0,0,0,.05); }
+  .sec-title { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 10px; }
+  .ahorro-box { background: #ecfdf5; border-radius: 10px; padding: 10px; margin-top: 8px; }
+  .ahorro-box p { color: #059669; font-weight: 700; font-size: 14px; }
+  .qty-row { display: flex; align-items: center; gap: 18px; }
+  .btn-qty { width: 40px; height: 40px; border-radius: 20px; background: #f3f4f6; border: none; font-size: 22px; font-weight: 700; cursor: pointer; }
+  .qty-num { font-size: 24px; font-weight: 900; color: #111827; min-width: 32px; text-align: center; }
+  .stock-info { font-size: 13px; color: #9ca3af; }
+  .resumen-box { background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 16px; padding: 16px; margin-bottom: 18px; }
+  .resumen-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .resumen-label { font-size: 15px; color: #374151; }
+  .resumen-total { font-size: 18px; font-weight: 900; color: #111827; }
+  .resumen-ahorro { font-size: 16px; font-weight: 700; color: #16A34A; }
+  .btn-pagar { width: 100%; background: #009EE3; color: white; border: none; border-radius: 16px; padding: 18px; font-size: 17px; font-weight: 800; cursor: pointer; margin-bottom: 12px; transition: .15s; }
+  .btn-pagar:hover { background: #0080c0; }
+  .disclaimer { text-align: center; font-size: 12px; color: #9ca3af; line-height: 1.5; }
+
+  /* ── Mis compras ── */
+  .mis-compras { padding: 16px; }
+  .order-card { background: white; border-radius: 16px; overflow: hidden; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  .order-estado { padding: 10px 16px; font-size: 14px; font-weight: 700; color: white; }
+  .order-body { padding: 16px; }
+  .order-id    { font-size: 12px; color: #9ca3af; margin-bottom: 4px; }
+  .order-total { font-size: 20px; font-weight: 900; color: #111827; margin-bottom: 4px; }
+  .order-fecha { font-size: 12px; color: #9ca3af; margin-bottom: 16px; }
+  .qr-container { background: #f9faf9; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .qr-box { width: 160px; height: 160px; }
+  .qr-codigo   { font-size: 16px; font-weight: 900; letter-spacing: 2px; color: #374151; }
+  .qr-inst     { font-size: 12px; color: #9ca3af; text-align: center; line-height: 1.5; }
+
+  /* ── Modal MP ── */
+  .mp-modal { position: absolute; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: flex-end; z-index: 100; }
+  .mp-sheet { background: white; border-radius: 24px 24px 0 0; padding: 28px 24px 36px; width: 100%; }
+  .mp-logo   { font-size: 28px; font-weight: 900; color: #009EE3; text-align: center; margin-bottom: 6px; }
+  .mp-sub    { text-align: center; font-size: 14px; color: #6b7280; margin-bottom: 24px; }
+  .mp-detalle { background: #f9faf9; border-radius: 14px; padding: 16px; margin-bottom: 20px; }
+  .mp-det-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+  .mp-det-label { font-size: 14px; color: #6b7280; }
+  .mp-det-val   { font-size: 14px; font-weight: 700; color: #111827; }
+  .btn-mp-pagar { width: 100%; background: #009EE3; color: white; border: none; border-radius: 16px; padding: 18px; font-size: 17px; font-weight: 800; cursor: pointer; margin-bottom: 10px; }
+  .btn-mp-cancelar { width: 100%; background: none; border: none; color: #9ca3af; font-size: 15px; cursor: pointer; padding: 8px; }
+
+  /* ── Modal éxito ── */
+  .success-modal { position: absolute; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 24px; }
+  .success-card { background: white; border-radius: 24px; padding: 32px 24px; width: 100%; text-align: center; }
+  .success-icon { font-size: 56px; margin-bottom: 12px; }
+  .success-title { font-size: 22px; font-weight: 900; color: #16A34A; margin-bottom: 8px; }
+  .success-sub   { font-size: 14px; color: #6b7280; margin-bottom: 24px; line-height: 1.5; }
+  .btn-ver-qr { width: 100%; background: #16A34A; color: white; border: none; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 800; cursor: pointer; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="phone-bar">
+    <span class="time">21:30</span>
+    <span class="icons">▲ ◉ ▌▌</span>
+  </div>
+
+  <!-- ════════════════════════════════
+       SCREEN 1: HOME
+  ════════════════════════════════ -->
+  <div class="screen active" id="screen-home">
+    <div class="header">
+      <h1>AhorraSabor 🌿</h1>
+      <p>Packs frescos con hasta 70% de descuento</p>
+    </div>
+
+    <div class="filtros">
+      <button class="chip active" onclick="filtrar(this,'todos')">Todos</button>
+      <button class="chip" onclick="filtrar(this,'Panadería')">Panadería</button>
+      <button class="chip" onclick="filtrar(this,'Rotisería')">Rotisería</button>
+      <button class="chip" onclick="filtrar(this,'Café')">Café</button>
+      <button class="chip" onclick="filtrar(this,'Restaurante')">Restaurante</button>
+    </div>
+
+    <div class="lista" id="lista-packs"></div>
+
+    <div class="tabbar">
+      <button class="tab active" onclick="goTab('home')">
+        <span class="tab-icon">🏠</span>
+        <span class="tab-label">Inicio</span>
+      </button>
+      <button class="tab" onclick="goTab('compras')">
+        <span class="tab-icon">🛍</span>
+        <span class="tab-label">Mis Compras</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       SCREEN 2: DETALLE DE PACK
+  ════════════════════════════════ -->
+  <div class="screen" id="screen-detalle">
+    <div class="detalle-header-bar">
+      <button class="btn-back" onclick="goScreen('home')">‹</button>
+      <span>Pack Sorpresa</span>
+    </div>
+    <div class="detalle-scroll" id="detalle-contenido"></div>
+  </div>
+
+  <!-- ════════════════════════════════
+       SCREEN 3: MIS COMPRAS
+  ════════════════════════════════ -->
+  <div class="screen" id="screen-compras">
+    <div class="header">
+      <h1>Mis Compras</h1>
+    </div>
+    <div class="lista mis-compras" id="lista-compras"></div>
+    <div class="tabbar">
+      <button class="tab" onclick="goTab('home')">
+        <span class="tab-icon">🏠</span>
+        <span class="tab-label">Inicio</span>
+      </button>
+      <button class="tab active" onclick="goTab('compras')">
+        <span class="tab-icon">🛍</span>
+        <span class="tab-label">Mis Compras</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       MODAL: CHECKOUT MP
+  ════════════════════════════════ -->
+  <div class="mp-modal hidden" id="modal-mp">
+    <div class="mp-sheet">
+      <div class="mp-logo">Mercado Pago</div>
+      <div class="mp-sub">Confirmá tu pago de forma segura</div>
+      <div class="mp-detalle" id="mp-detalle"></div>
+      <button class="btn-mp-pagar" onclick="confirmarPago()">Pagar ahora</button>
+      <button class="btn-mp-cancelar" onclick="document.getElementById('modal-mp').classList.add('hidden')">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       MODAL: ÉXITO
+  ════════════════════════════════ -->
+  <div class="success-modal hidden" id="modal-success">
+    <div class="success-card">
+      <div class="success-icon">✅</div>
+      <div class="success-title">¡Pago aprobado!</div>
+      <div class="success-sub">Tu pack está reservado. Presentá el código QR al retirar.</div>
+      <button class="btn-ver-qr" onclick="verQR()">Ver mi código QR</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────── -->
+<script>
+const PACKS = [
+  { id:1, merchant:'Panadería Don Julio', cat:'Panadería', catColor:'#f97316',
+    title:'Pack Medialunas del día', desc:'Incluye 6 medialunas de manteca, facturas variadas y pan de mesa frescos del turno tarde.',
+    reg:2800, offer:840, stock:3, hora:'18:00 – 21:00', dist:'250 m' },
+  { id:2, merchant:'La Esquina Café', cat:'Café', catColor:'#92400e',
+    title:'Pack Café & Bollería', desc:'Café en grano + 4 scones + 2 muffins de arándano que no llegaron a venderse.',
+    reg:3500, offer:1050, stock:1, hora:'17:00 – 20:00', dist:'480 m' },
+  { id:3, merchant:'Rotisería El Turco', cat:'Rotisería', catColor:'#ef4444',
+    title:'Pack Almuerzo Sorpresa', desc:'Combinado del día con plato principal + guarnición + postre. Menú según disponibilidad.',
+    reg:4200, offer:1260, stock:4, hora:'13:00 – 15:30', dist:'700 m' },
+  { id:4, merchant:'Tutto Pasta', cat:'Restaurante', catColor:'#7c3aed',
+    title:'Pack Pasta Fresca', desc:'1 kg de pastas frescas surtidas (ravioles, tallarines, ñoquis) con salsa de tomate casera.',
+    reg:5500, offer:1650, stock:2, hora:'19:00 – 22:00', dist:'1.1 km' },
+];
+
+let qty = 1;
+let packActivo = null;
+let compras = [];
+
+const fmt = n => new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0}).format(n);
+const pct  = (r,o) => Math.round((1-o/r)*100);
+
+function filtrar(btn, cat) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderPacks(cat === 'todos' ? PACKS : PACKS.filter(p => p.cat === cat));
+}
+
+function renderPacks(lista) {
+  const el = document.getElementById('lista-packs');
+  if (!lista.length) { el.innerHTML='<div style="text-align:center;margin-top:60px;"><div style="font-size:42px">🛒</div><p style="color:#6b7280;margin-top:12px;font-weight:600">Sin packs en esta categoría</p></div>'; return; }
+  el.innerHTML = lista.map(p => {
+    const d = pct(p.reg,p.offer);
+    const stockBajo = p.stock <= 2;
+    return `
+    <div class="card" onclick="abrirDetalle(${p.id})">
+      <div class="card-badge" style="background:${p.catColor}">${p.cat}</div>
+      <div class="card-body">
+        <div class="card-merchant">${p.merchant}</div>
+        <div class="card-title">${p.title}</div>
+        <div class="price-row">
+          <span class="price-offer">${fmt(p.offer)}</span>
+          <span class="price-reg">${fmt(p.reg)}</span>
+          <span class="badge-pct">${d}% OFF</span>
+        </div>
+        <div class="ahorro-text">💰 Ahorrás ${fmt(p.reg-p.offer)}</div>
+        <div class="card-footer">
+          <span>🕐 Retiro: ${p.hora}</span>
+          <span>📍 ${p.dist}</span>
+        </div>
+        ${stockBajo ? `<div class="stock-alerta">⚡ ¡Solo ${p.stock} ${p.stock===1?'pack':'packs'}!</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function abrirDetalle(id) {
+  packActivo = PACKS.find(p => p.id === id);
+  qty = 1;
+  renderDetalle();
+  goScreen('detalle');
+}
+
+function renderDetalle() {
+  const p = packActivo;
+  const d = pct(p.reg,p.offer);
+  const total = p.offer * qty;
+  const ahorroTotal = (p.reg-p.offer)*qty;
+  document.getElementById('detalle-contenido').innerHTML = `
+    <div class="hero-card">
+      <div class="hero-cat">${p.cat}</div>
+      <div class="hero-merchant">${p.merchant}</div>
+      <div class="hero-title">${p.title}</div>
+      <div class="hero-desc">${p.desc}</div>
+    </div>
+    <div class="seccion">
+      <div class="price-row">
+        <span class="price-offer" style="font-size:30px">${fmt(p.offer)}</span>
+        <span class="price-reg" style="font-size:16px">${fmt(p.reg)}</span>
+        <span class="badge-pct">${d}% OFF</span>
+      </div>
+      <div class="ahorro-box"><p>💰 Ahorrás ${fmt(p.reg-p.offer)} por pack</p></div>
+    </div>
+    <div class="seccion">
+      <div class="sec-title">Ventana de Retiro</div>
+      <p style="font-size:15px;color:#374151;margin-bottom:6px">🕐 ${p.hora}</p>
+      <p style="font-size:14px;color:#6b7280">📍 ${p.merchant} — ${p.dist} de vos</p>
+    </div>
+    <div class="seccion">
+      <div class="sec-title">Cantidad</div>
+      <div class="qty-row">
+        <button class="btn-qty" onclick="cambiarQty(-1)">−</button>
+        <span class="qty-num" id="qty-display">${qty}</span>
+        <button class="btn-qty" onclick="cambiarQty(1)">+</button>
+        <span class="stock-info">(${p.stock} disponibles)</span>
+      </div>
+    </div>
+    <div class="resumen-box">
+      <div class="resumen-row">
+        <span class="resumen-label">Total a pagar</span>
+        <span class="resumen-total" id="resumen-total">${fmt(total)}</span>
+      </div>
+      <div class="resumen-row">
+        <span class="resumen-label">Tu ahorro total</span>
+        <span class="resumen-ahorro" id="resumen-ahorro">${fmt(ahorroTotal)}</span>
+      </div>
+    </div>
+    <button class="btn-pagar" onclick="abrirMP()">Pagar con Mercado Pago</button>
+    <p class="disclaimer">Al finalizar el pago recibirás un código QR para retirar tu pack.</p>
+  `;
+}
+
+function cambiarQty(d) {
+  qty = Math.max(1, Math.min(packActivo.stock, qty+d));
+  document.getElementById('qty-display').textContent = qty;
+  document.getElementById('resumen-total').textContent  = fmt(packActivo.offer*qty);
+  document.getElementById('resumen-ahorro').textContent = fmt((packActivo.reg-packActivo.offer)*qty);
+}
+
+function abrirMP() {
+  const p = packActivo;
+  const total = p.offer * qty;
+  document.getElementById('mp-detalle').innerHTML = `
+    <div class="mp-det-row"><span class="mp-det-label">${p.title}</span><span class="mp-det-val">${qty}x ${fmt(p.offer)}</span></div>
+    <div class="mp-det-row" style="border-top:1px solid #e5e7eb;padding-top:8px;margin-top:4px">
+      <span class="mp-det-label" style="font-weight:700;color:#111">Total</span>
+      <span class="mp-det-val" style="font-size:18px;color:#009EE3">${fmt(total)}</span>
+    </div>
+  `;
+  document.getElementById('modal-mp').classList.remove('hidden');
+}
+
+function confirmarPago() {
+  document.getElementById('modal-mp').classList.add('hidden');
+  // Simular procesamiento
+  setTimeout(() => {
+    const p = packActivo;
+    compras.unshift({
+      id: 'AS-' + Math.random().toString(36).slice(2,10).toUpperCase(),
+      pack: p.title,
+      merchant: p.merchant,
+      total: p.offer * qty,
+      estado: 'aprobado',
+      fecha: new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'}),
+    });
+    document.getElementById('modal-success').classList.remove('hidden');
+  }, 800);
+}
+
+function verQR() {
+  document.getElementById('modal-success').classList.add('hidden');
+  renderCompras();
+  goTab('compras');
+}
+
+function renderCompras() {
+  const el = document.getElementById('lista-compras');
+  if (!compras.length) { el.innerHTML='<div style="text-align:center;margin-top:60px;"><div style="font-size:42px">🛍</div><p style="color:#6b7280;margin-top:12px;font-weight:600">Todavía no compraste ningún pack.</p></div>'; return; }
+  el.innerHTML = compras.map(c => `
+    <div class="order-card">
+      <div class="order-estado" style="background:#16A34A">✅ Aprobado — mostrá el QR</div>
+      <div class="order-body">
+        <div class="order-id">Orden #${c.id}</div>
+        <div class="order-total">${fmt(c.total)}</div>
+        <div class="order-fecha" style="text-transform:capitalize">${c.fecha}</div>
+        <div class="qr-container">
+          <svg class="qr-box" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+            <rect width="160" height="160" fill="white"/>
+            ${generateQRPattern(c.id)}
+          </svg>
+          <div class="qr-codigo">${c.id}</div>
+          <div class="qr-inst">Mostrá este código al comercio<br>para retirar tu pack</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function generateQRPattern(seed) {
+  // QR visual decorativo basado en el seed
+  let rects = '';
+  const cells = 10;
+  const size = 14;
+  const r = (n) => { let x=n; x=(x^(x<<13))^(x>>7); return Math.abs(x)%100; };
+  let n = seed.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+  for(let i=0;i<cells;i++) for(let j=0;j<cells;j++){
+    n = r(n+i*31+j*17);
+    if(n<55 || (i<3&&j<3) || (i>6&&j<3) || (i<3&&j>6)){
+      const dark = (i<3&&j<3)||(i>6&&j<3)||(i<3&&j>6);
+      rects += `<rect x="${16+j*size}" y="${16+i*size}" width="${size-1}" height="${size-1}" fill="${dark?'#111827':'#374151'}" rx="1"/>`;
+    }
+  }
+  // Esquinas del QR
+  ['16,16','16,114','114,16'].forEach(([x,y])=>{
+    rects += `<rect x="${x}" y="${y}" width="32" height="32" rx="4" fill="#111827"/>`;
+    rects += `<rect x="${+x+5}" y="${+y+5}" width="22" height="22" rx="2" fill="white"/>`;
+    rects += `<rect x="${+x+9}" y="${+y+9}" width="14" height="14" rx="1" fill="#111827"/>`;
+  });
+  return rects;
+}
+
+function goScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+}
+
+function goTab(name) {
+  goScreen(name === 'home' ? 'home' : 'compras');
+  if (name === 'compras') renderCompras();
+}
+
+// Init
+renderPacks(PACKS);
+
+// Simular Realtime: stock se actualiza cada 8 segundos
+setInterval(() => {
+  const pack = PACKS[Math.floor(Math.random()*PACKS.length)];
+  if (pack.stock > 0) {
+    pack.stock = Math.max(0, pack.stock - 1);
+    const activeChip = document.querySelector('.chip.active');
+    const cat = activeChip?.textContent;
+    const lista = cat === 'Todos' ? PACKS : PACKS.filter(p=>p.cat===cat);
+    renderPacks(lista.filter(p=>p.stock>0 || p.id===pack.id));
+    // Flash visual de la card afectada
+    setTimeout(()=>{
+      const lista2 = cat==='Todos'?PACKS.filter(p=>p.stock>0):PACKS.filter(p=>p.cat===cat&&p.stock>0);
+      renderPacks(lista2);
+    }, 600);
+  }
+}, 8000);
+</script>
+</body>
+</html>

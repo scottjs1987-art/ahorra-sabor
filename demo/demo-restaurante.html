@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>AhorraSabor — Demo Comercio</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  body { background: #f3f4f6; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 24px 16px; }
+
+  .phone { width: 390px; min-height: 844px; background: #f9faf9; border-radius: 44px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.22), 0 0 0 1.5px rgba(0,0,0,.08); position: relative; }
+  .phone-bar { height: 44px; background: #f97316; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; }
+  .phone-bar .time { color: white; font-size: 15px; font-weight: 600; }
+  .phone-bar .icons { color: white; font-size: 13px; display: flex; gap: 6px; }
+
+  .screen { display: none; flex-direction: column; height: 100%; }
+  .screen.active { display: flex; }
+
+  /* ── Header ── */
+  .header { background: #f97316; padding: 20px 20px 24px; display: flex; justify-content: space-between; align-items: flex-end; }
+  .header h1  { color: white; font-size: 22px; font-weight: 800; }
+  .header p   { color: #fed7aa; font-size: 12px; margin-top: 2px; }
+  .btn-nuevo  { background: white; color: #f97316; border: none; border-radius: 12px; padding: 9px 14px; font-size: 13px; font-weight: 800; cursor: pointer; }
+
+  /* ── Stats bar ── */
+  .stats { display: flex; background: white; border-bottom: 1px solid #f3f4f6; }
+  .stat { flex: 1; padding: 14px 0; text-align: center; border-right: 1px solid #f3f4f6; }
+  .stat:last-child { border: none; }
+  .stat-val { font-size: 22px; font-weight: 900; color: #111827; }
+  .stat-lab { font-size: 10px; color: #9ca3af; margin-top: 2px; font-weight: 600; }
+
+  /* ── Lista ── */
+  .lista { flex: 1; overflow-y: auto; padding: 12px 16px 24px; }
+
+  /* ── Pack card del comercio ── */
+  .pack-card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  .pack-top   { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .pack-nombre { font-size: 15px; font-weight: 700; color: #111827; flex: 1; }
+  .estado-badge { border-radius: 8px; padding: 4px 10px; font-size: 11px; font-weight: 700; color: white; margin-left: 8px; }
+  .pack-info   { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+  .pack-info span { font-size: 13px; color: #6b7280; }
+  .pack-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-accion { border: none; border-radius: 10px; padding: 9px 14px; font-size: 13px; font-weight: 700; cursor: pointer; transition: .12s; }
+  .btn-accion:hover { opacity: .85; }
+
+  /* ── Tab bar ── */
+  .tabbar { display: flex; background: white; border-top: 1px solid #f3f4f6; padding: 10px 0 18px; }
+  .tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; border: none; background: none; }
+  .tab .tab-icon { font-size: 22px; }
+  .tab .tab-label { font-size: 10px; font-weight: 600; color: #9ca3af; }
+  .tab.active .tab-label { color: #f97316; }
+
+  /* ── Formulario nuevo pack ── */
+  .form-header { display: flex; align-items: center; gap: 12px; padding: 14px 20px; background: white; border-bottom: 1px solid #f3f4f6; }
+  .btn-back    { font-size: 22px; cursor: pointer; background: none; border: none; }
+  .form-title  { font-size: 17px; font-weight: 700; color: #111827; }
+  .form-scroll { flex: 1; overflow-y: auto; padding: 20px; }
+  .form-section { background: white; border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 6px rgba(0,0,0,.05); }
+  .form-label  { font-size: 12px; font-weight: 700; color: #374151; margin-top: 10px; margin-bottom: 6px; display: block; }
+  .form-input  { width: 100%; border: 1.5px solid #e5e7eb; border-radius: 12px; padding: 12px 14px; font-size: 15px; color: #111827; background: #fafafa; outline: none; }
+  .form-input:focus { border-color: #f97316; }
+  .cat-grid    { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .cat-chip    { border: none; border-radius: 20px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; background: #f3f4f6; color: #374151; }
+  .cat-chip.active { background: #f97316; color: white; }
+  .descuento-preview { border-radius: 10px; padding: 10px; margin-top: 8px; font-weight: 700; font-size: 14px; }
+  .toggle-row  { display: flex; justify-content: space-between; align-items: center; }
+  .toggle-sub  { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+  .toggle      { width: 50px; height: 28px; border-radius: 14px; border: none; cursor: pointer; position: relative; transition: .2s; }
+  .toggle.on   { background: #86efac; }
+  .toggle.off  { background: #d1d5db; }
+  .toggle::after { content:''; position:absolute; top:3px; width:22px; height:22px; border-radius:11px; background:white; transition:.2s; box-shadow:0 1px 4px rgba(0,0,0,.2); }
+  .toggle.on::after  { left:25px; background:#16A34A; }
+  .toggle.off::after { left:3px; background:#9ca3af; }
+  .btn-publicar { width: 100%; background: #f97316; color: white; border: none; border-radius: 16px; padding: 18px; font-size: 17px; font-weight: 800; cursor: pointer; margin-top: 8px; transition: .15s; }
+  .btn-publicar:hover { background: #ea6005; }
+
+  /* ── Scanner ── */
+  .scanner-view { flex: 1; background: #111; display: flex; flex-direction: column; }
+  .scanner-hdr  { display: flex; justify-content: space-between; align-items: center; padding: 56px 20px 16px; }
+  .scanner-hdr button { color: white; background: none; border: none; font-size: 16px; font-weight: 600; cursor: pointer; }
+  .scanner-hdr span   { color: white; font-size: 18px; font-weight: 800; }
+  .camara { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+  .camara-bg { position: absolute; inset: 0; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); }
+  .camara-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.45); }
+  .qr-frame { position: relative; z-index: 1; width: 220px; height: 220px; }
+  .qr-frame::before,.qr-frame::after { content:''; position:absolute; width:28px; height:28px; border-color:#16A34A; border-style:solid; border-radius:4px; }
+  .qr-frame::before { top:0; left:0; border-width:3px 0 0 3px; }
+  .qr-frame::after  { bottom:0; right:0; border-width:0 3px 3px 0; }
+  .corner-tr { position:absolute; top:0; right:0; width:28px; height:28px; border-color:#16A34A; border-style:solid; border-radius:4px; border-width:3px 3px 0 0; }
+  .corner-bl { position:absolute; bottom:0; left:0; width:28px; height:28px; border-color:#16A34A; border-style:solid; border-radius:4px; border-width:0 0 3px 3px; }
+  .scan-beam { position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,transparent,#16A34A,transparent); animation:beam 2s linear infinite; }
+  @keyframes beam { 0%{top:0} 50%{top:calc(100%-3px)} 100%{top:0} }
+  .qr-demo-inside { position:absolute; inset:20px; background:white; border-radius:8px; display:flex; align-items:center; justify-content:center; opacity:0; transition:.4s; }
+  .qr-demo-inside.visible { opacity:1; }
+  .scanner-footer { padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .scan-instruccion { color: white; font-size: 14px; text-align: center; line-height: 1.5; }
+  .btn-simular { background: #16A34A; color: white; border: none; border-radius: 14px; padding: 13px 28px; font-size: 15px; font-weight: 700; cursor: pointer; }
+
+  /* ── Overlay resultado scanner ── */
+  .scan-result { position: absolute; inset: 0; background: rgba(0,0,0,.75); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 50; }
+  .scan-card   { background: white; border-radius: 24px; padding: 28px 20px; width: 100%; text-align: center; }
+  .scan-icon   { font-size: 52px; margin-bottom: 10px; }
+  .scan-title  { font-size: 20px; font-weight: 900; margin-bottom: 8px; }
+  .scan-detail { font-size: 13px; color: #6b7280; margin-bottom: 6px; line-height: 1.5; }
+  .scan-neto   { font-size: 18px; font-weight: 800; color: #16A34A; margin: 10px 0 18px; }
+  .btn-scan-otro { width: 100%; background: #16A34A; color: white; border: none; border-radius: 14px; padding: 15px; font-size: 16px; font-weight: 800; cursor: pointer; }
+
+  /* ── Modal publicar éxito ── */
+  .pub-modal { position: absolute; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 24px; }
+  .pub-card  { background: white; border-radius: 24px; padding: 32px 24px; width: 100%; text-align: center; }
+
+  /* ── Modal donación ── */
+  .don-modal { position: absolute; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 24px; }
+  .don-card  { background: white; border-radius: 24px; padding: 28px 20px; width: 100%; }
+  .don-title { font-size: 20px; font-weight: 900; margin-bottom: 8px; }
+  .don-sub   { font-size: 14px; color: #6b7280; margin-bottom: 20px; line-height: 1.5; }
+  .don-box   { background: #fefce8; border: 1.5px solid #fde047; border-radius: 14px; padding: 16px; margin-bottom: 18px; }
+  .don-box p { font-size: 14px; color: #713f12; line-height: 1.5; }
+  .btn-donar { width: 100%; background: #f97316; color: white; border: none; border-radius: 14px; padding: 15px; font-size: 16px; font-weight: 800; cursor: pointer; margin-bottom: 10px; }
+  .btn-don-cancel { width: 100%; background: none; border: none; color: #9ca3af; font-size: 14px; cursor: pointer; padding: 8px; }
+
+  .hidden { display: none !important; }
+  .fmt-ars { font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="phone-bar">
+    <span class="time">21:30</span>
+    <span class="icons">▲ ◉ ▌▌</span>
+  </div>
+
+  <!-- ════════════════════════════════
+       SCREEN 1: DASHBOARD
+  ════════════════════════════════ -->
+  <div class="screen active" id="screen-dashboard">
+    <div class="header">
+      <div>
+        <h1>Panel del Comercio</h1>
+        <p>Panadería Don Julio</p>
+      </div>
+      <button class="btn-nuevo" onclick="goScreen('nuevo-pack')">+ Nuevo Pack</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-val" id="stat-activos">2</div>
+        <div class="stat-lab">ACTIVOS</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="stat-vendidos">11</div>
+        <div class="stat-lab">VENDIDOS HOY</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="stat-ingresos">$9.240</div>
+        <div class="stat-lab">INGRESO NETO</div>
+      </div>
+    </div>
+
+    <div class="lista" id="lista-packs-merchant"></div>
+
+    <div class="tabbar">
+      <button class="tab active"><span class="tab-icon">📊</span><span class="tab-label">Dashboard</span></button>
+      <button class="tab" onclick="goScreen('scanner')"><span class="tab-icon">📷</span><span class="tab-label">Validar QR</span></button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       SCREEN 2: NUEVO PACK
+  ════════════════════════════════ -->
+  <div class="screen" id="screen-nuevo-pack">
+    <div class="form-header">
+      <button class="btn-back" onclick="goScreen('dashboard')">‹</button>
+      <span class="form-title">Publicar Pack Sorpresa</span>
+    </div>
+    <div class="form-scroll">
+      <div class="form-section">
+        <label class="form-label">Nombre del pack *</label>
+        <input class="form-input" id="input-nombre" type="text" placeholder="Ej: Pack del día — Medialunas" maxlength="80">
+
+        <label class="form-label">Descripción (opcional)</label>
+        <textarea class="form-input" id="input-desc" rows="3" placeholder="Contale al cliente qué puede incluir..." style="resize:none"></textarea>
+      </div>
+
+      <div class="form-section">
+        <label class="form-label">Categoría</label>
+        <div class="cat-grid" id="cat-grid">
+          <button class="cat-chip active" onclick="selCat(this)">Panadería</button>
+          <button class="cat-chip" onclick="selCat(this)">Rotisería</button>
+          <button class="cat-chip" onclick="selCat(this)">Café</button>
+          <button class="cat-chip" onclick="selCat(this)">Restaurante</button>
+          <button class="cat-chip" onclick="selCat(this)">Verdulería</button>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <label class="form-label">Precio original (ARS) *</label>
+        <input class="form-input" id="input-reg" type="number" placeholder="Ej: 2500" oninput="calcDesc()">
+
+        <label class="form-label">Precio con descuento (ARS) *</label>
+        <input class="form-input" id="input-offer" type="number" placeholder="Ej: 900" oninput="calcDesc()">
+
+        <div id="desc-preview" class="descuento-preview" style="display:none"></div>
+
+        <label class="form-label">Cantidad disponible *</label>
+        <input class="form-input" id="input-stock" type="number" placeholder="Ej: 5" min="1">
+      </div>
+
+      <div class="form-section">
+        <div class="toggle-row">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#374151">Expiración automática</div>
+            <div class="toggle-sub">El pack se desactiva al cierre del local</div>
+          </div>
+          <button class="toggle on" id="toggle-exp" onclick="toggleExp()"></button>
+        </div>
+      </div>
+
+      <button class="btn-publicar" onclick="publicarPack()">Publicar Pack</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       SCREEN 3: SCANNER QR
+  ════════════════════════════════ -->
+  <div class="screen" id="screen-scanner">
+    <div class="scanner-view">
+      <div class="scanner-hdr">
+        <button onclick="goScreen('dashboard')">✕ Cerrar</button>
+        <span>Validar Pick-up</span>
+        <div style="width:60px"></div>
+      </div>
+
+      <div class="camara">
+        <div class="camara-bg"></div>
+        <div class="camara-overlay"></div>
+        <div class="qr-frame">
+          <div class="corner-tr"></div>
+          <div class="corner-bl"></div>
+          <div class="scan-beam"></div>
+          <div class="qr-demo-inside" id="qr-anim">
+            <svg viewBox="0 0 80 80" width="80" height="80">
+              <rect x="5" y="5" width="25" height="25" rx="3" fill="#111"/>
+              <rect x="8" y="8" width="19" height="19" rx="2" fill="white"/>
+              <rect x="12" y="12" width="11" height="11" rx="1" fill="#111"/>
+              <rect x="50" y="5" width="25" height="25" rx="3" fill="#111"/>
+              <rect x="53" y="8" width="19" height="19" rx="2" fill="white"/>
+              <rect x="57" y="12" width="11" height="11" rx="1" fill="#111"/>
+              <rect x="5" y="50" width="25" height="25" rx="3" fill="#111"/>
+              <rect x="8" y="53" width="19" height="19" rx="2" fill="white"/>
+              <rect x="12" y="57" width="11" height="11" rx="1" fill="#111"/>
+              <rect x="35" y="5" width="8" height="8" fill="#111"/>
+              <rect x="35" y="20" width="8" height="8" fill="#111"/>
+              <rect x="35" y="35" width="8" height="8" fill="#111"/>
+              <rect x="50" y="35" width="8" height="8" fill="#111"/>
+              <rect x="65" y="35" width="8" height="8" fill="#111"/>
+              <rect x="50" y="50" width="8" height="8" fill="#111"/>
+              <rect x="65" y="65" width="8" height="8" fill="#111"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="scanner-footer">
+        <p class="scan-instruccion">Apuntá la cámara al código QR<br>del cliente para confirmar la entrega</p>
+        <button class="btn-simular" onclick="simularScan()">▶ Simular escaneo</button>
+      </div>
+
+      <!-- Overlay resultado -->
+      <div class="scan-result hidden" id="scan-result-ok">
+        <div class="scan-card" id="scan-result-card"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       MODAL: Pack publicado
+  ════════════════════════════════ -->
+  <div class="pub-modal hidden" id="modal-pub">
+    <div class="pub-card">
+      <div style="font-size:52px;margin-bottom:12px">🎉</div>
+      <div style="font-size:22px;font-weight:900;color:#f97316;margin-bottom:8px">¡Pack publicado!</div>
+      <div style="font-size:14px;color:#6b7280;margin-bottom:24px;line-height:1.5">Tu pack ya es visible para los compradores cercanos en tiempo real.</div>
+      <button style="width:100%;background:#f97316;color:white;border:none;border-radius:14px;padding:16px;font-size:16px;font-weight:800;cursor:pointer" onclick="cerrarPub()">Ver mis packs</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       MODAL: Donación
+  ════════════════════════════════ -->
+  <div class="don-modal hidden" id="modal-don">
+    <div class="don-card">
+      <div style="font-size:42px;margin-bottom:10px;text-align:center">🤝</div>
+      <div class="don-title" style="text-align:center">Donar excedente</div>
+      <div class="don-sub">Los packs que no se vendieron pueden ser aprovechados por personas que lo necesitan.</div>
+      <div class="don-box">
+        <p>📦 <strong>3 packs</strong> de "Pack Medialunas del día" quedarán disponibles para retirar en las próximas 2 horas.<br><br>🏠 La ONG <strong>Banco de Alimentos BA</strong> será notificada al instante.</p>
+      </div>
+      <button class="btn-donar" onclick="confirmarDonacion()">Sí, donar al banco de alimentos</button>
+      <button class="btn-don-cancel" onclick="document.getElementById('modal-don').classList.add('hidden')">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- MODAL: Donación exitosa -->
+  <div class="pub-modal hidden" id="modal-don-ok">
+    <div class="pub-card">
+      <div style="font-size:52px;margin-bottom:12px">💚</div>
+      <div style="font-size:20px;font-weight:900;color:#16A34A;margin-bottom:8px">¡Gracias!</div>
+      <div style="font-size:14px;color:#6b7280;margin-bottom:8px;line-height:1.5">El Banco de Alimentos fue notificado.<br>Pasarán a buscar el excedente antes de las 23:00 hs.</div>
+      <div style="background:#fef9c3;border-radius:12px;padding:12px;margin-bottom:20px;">
+        <p style="font-size:13px;color:#713f12;font-weight:700;text-align:center">🌱 Evitaste desperdiciar comida fresca</p>
+      </div>
+      <button style="width:100%;background:#16A34A;color:white;border:none;border-radius:14px;padding:16px;font-size:16px;font-weight:800;cursor:pointer" onclick="document.getElementById('modal-don-ok').classList.add('hidden')">Aceptar</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ─────────────────────────────── -->
+<script>
+const fmt = n => new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0}).format(n);
+
+const packs = [
+  { id:1, nombre:'Pack Medialunas del día', precio:2800, descuento:840, stock:3, horario:'18:00 – 21:00', estado:'activo', vendidos:8 },
+  { id:2, nombre:'Pack Café & Facturas (tarde)', precio:2200, descuento:660, stock:0, horario:'16:00 – 19:00', estado:'agotado', vendidos:3 },
+];
+
+const ESTADO = {
+  activo:  { color:'#16A34A', label:'activo' },
+  pausado: { color:'#d97706', label:'pausado' },
+  agotado: { color:'#dc2626', label:'agotado' },
+  expirado:{ color:'#6b7280', label:'expirado' },
+};
+
+let togExp = true;
+
+function renderDashboard() {
+  const activos = packs.filter(p=>p.estado==='activo').length;
+  document.getElementById('stat-activos').textContent = activos;
+  document.getElementById('lista-packs-merchant').innerHTML = packs.map(p => {
+    const e = ESTADO[p.estado] || ESTADO.activo;
+    const pct = Math.round((1-p.descuento/p.precio)*100);
+    return `
+    <div class="pack-card">
+      <div class="pack-top">
+        <div class="pack-nombre">${p.nombre}</div>
+        <span class="estado-badge" style="background:${e.color}">${e.label}</span>
+      </div>
+      <div class="pack-info">
+        <span>💰 ${fmt(p.descuento)} <span style="color:#9ca3af;text-decoration:line-through;font-size:12px">${fmt(p.precio)}</span> — ${pct}% OFF</span>
+        <span>📦 Stock: ${p.stock} unidades ${p.vendidos?`· Vendidos hoy: ${p.vendidos}`:''}</span>
+        <span>🕐 ${p.horario}</span>
+      </div>
+      <div class="pack-acciones">
+        <button class="btn-accion" style="background:${p.estado==='activo'?'#fee2e2':'#dcfce7'};color:${p.estado==='activo'?'#dc2626':'#16A34A'}"
+          onclick="togglePack(${p.id})">${p.estado==='activo'?'Pausar':'Activar'}</button>
+        ${p.estado==='activo' && p.stock>0 ? `<button class="btn-accion" style="background:#fef9c3;color:#ca8a04" onclick="document.getElementById('modal-don').classList.remove('hidden')">🤝 Donar excedente</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function togglePack(id) {
+  const p = packs.find(x=>x.id===id);
+  if (!p) return;
+  if (p.estado==='activo') p.estado='pausado';
+  else if (p.estado==='pausado') p.estado='activo';
+  renderDashboard();
+}
+
+function selCat(btn) {
+  document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function toggleExp() {
+  togExp = !togExp;
+  const btn = document.getElementById('toggle-exp');
+  btn.className = 'toggle ' + (togExp?'on':'off');
+}
+
+function calcDesc() {
+  const reg   = parseFloat(document.getElementById('input-reg').value)||0;
+  const offer = parseFloat(document.getElementById('input-offer').value)||0;
+  const el    = document.getElementById('desc-preview');
+  if (!reg || !offer) { el.style.display='none'; return; }
+  const pct = Math.round((1-offer/reg)*100);
+  el.style.display = 'block';
+  if (pct < 30) {
+    el.style.background='#fee2e2'; el.style.color='#dc2626';
+    el.textContent = `${pct}% de descuento — mínimo requerido: 30%`;
+  } else {
+    el.style.background='#ecfdf5'; el.style.color='#16A34A';
+    el.textContent = `${pct}% de descuento ✓`;
+  }
+}
+
+function publicarPack() {
+  const nombre = document.getElementById('input-nombre').value.trim();
+  const reg    = parseFloat(document.getElementById('input-reg').value)||0;
+  const offer  = parseFloat(document.getElementById('input-offer').value)||0;
+  const stock  = parseInt(document.getElementById('input-stock').value)||0;
+  if (!nombre) { alert('El nombre del pack es requerido'); return; }
+  if (reg<=0 || offer<=0) { alert('Completá los precios'); return; }
+  if (offer >= reg) { alert('El precio con descuento debe ser menor al original'); return; }
+  if (Math.round((1-offer/reg)*100) < 30) { alert('El descuento mínimo es del 30%'); return; }
+  if (stock < 1) { alert('La cantidad debe ser al menos 1'); return; }
+
+  packs.unshift({ id: Date.now(), nombre, precio:reg, descuento:offer, stock, horario:'18:00 – 21:00', estado:'activo', vendidos:0 });
+  document.getElementById('stat-activos').textContent = packs.filter(p=>p.estado==='activo').length;
+  document.getElementById('modal-pub').classList.remove('hidden');
+}
+
+function cerrarPub() {
+  document.getElementById('modal-pub').classList.add('hidden');
+  // Reset form
+  ['input-nombre','input-desc','input-reg','input-offer','input-stock'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('desc-preview').style.display='none';
+  renderDashboard();
+  goScreen('dashboard');
+}
+
+function confirmarDonacion() {
+  document.getElementById('modal-don').classList.add('hidden');
+  // Marcar pack donado
+  const activo = packs.find(p=>p.estado==='activo');
+  if (activo) { activo.estado='expirado'; activo.stock=0; }
+  renderDashboard();
+  setTimeout(()=>document.getElementById('modal-don-ok').classList.remove('hidden'),400);
+}
+
+// ── Scanner ──
+let scanTimeout = null;
+
+function simularScan() {
+  const qrAnim = document.getElementById('qr-anim');
+  qrAnim.classList.add('visible');
+
+  if (scanTimeout) clearTimeout(scanTimeout);
+  scanTimeout = setTimeout(() => {
+    qrAnim.classList.remove('visible');
+    mostrarResultado(true);
+  }, 1200);
+}
+
+function mostrarResultado(exito) {
+  const el = document.getElementById('scan-result-card');
+  const modal = document.getElementById('scan-result-ok');
+
+  if (exito) {
+    el.innerHTML = `
+      <div class="scan-icon">✅</div>
+      <div class="scan-title" style="color:#16A34A">¡Pack entregado!</div>
+      <div class="scan-detail">Pack Medialunas del día<br>Cliente: cliente@email.com · 2 unidades</div>
+      <div class="scan-neto">Tu cobro neto: ${fmt(1428)}</div>
+      <button class="btn-scan-otro" onclick="document.getElementById('scan-result-ok').classList.add('hidden')">Escanear otro pack</button>
+    `;
+  } else {
+    el.innerHTML = `
+      <div class="scan-icon">❌</div>
+      <div class="scan-title" style="color:#dc2626">¡SACA LA MANO<br>DE AHÍ, CARAJO!</div>
+      <div class="scan-detail">Este pack ya fue entregado anteriormente.</div>
+      <button class="btn-scan-otro" style="background:#dc2626" onclick="document.getElementById('scan-result-ok').classList.add('hidden')">Reintentar</button>
+    `;
+  }
+  modal.classList.remove('hidden');
+
+  // Actualizar stat de ventas
+  const vendidos = parseInt(document.getElementById('stat-vendidos').textContent)+1;
+  document.getElementById('stat-vendidos').textContent = vendidos;
+  const ingresos = 840*vendidos*0.85;
+  document.getElementById('stat-ingresos').textContent = fmt(ingresos).replace('$ ','$');
+}
+
+function mostrarQRInvalido() {
+  const el = document.getElementById('scan-result-card');
+  const modal = document.getElementById('scan-result-ok');
+  el.innerHTML = `
+    <div class="scan-icon">❌</div>
+    <div class="scan-title" style="color:#dc2626">¡SACA LA MANO<br>DE AHÍ, CARAJO!</div>
+    <div class="scan-detail" style="color:#dc2626;font-weight:700">Este pack ya fue entregado.</div>
+    <button class="btn-scan-otro" style="background:#dc2626" onclick="document.getElementById('scan-result-ok').classList.add('hidden')">Reintentar</button>
+  `;
+  modal.classList.remove('hidden');
+}
+
+// Botón para simular QR inválido (segunda pulsación del botón)
+let scanCount = 0;
+document.querySelector('.btn-simular').addEventListener('click', function() {
+  scanCount++;
+  // El tercer escaneo muestra el error "ya entregado"
+  if (scanCount % 3 === 0) {
+    const qrAnim = document.getElementById('qr-anim');
+    qrAnim.classList.add('visible');
+    setTimeout(()=>{ qrAnim.classList.remove('visible'); mostrarQRInvalido(); },1200);
+  }
+}, { passive: true });
+
+function goScreen(name) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+}
+
+// Init
+renderDashboard();
+</script>
+</body>
+</html>
